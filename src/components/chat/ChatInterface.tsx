@@ -10,6 +10,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Bot, User } from "lucide-react";
 
+interface ChatInterfaceProps {
+  hasStartedChat: boolean;
+  setHasStartedChat: (val: boolean) => void;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -86,7 +91,10 @@ const bounceVariants = {
   },
 };
 
-export function ChatInterface() {
+export function ChatInterface({
+  hasStartedChat,
+  setHasStartedChat,
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -111,6 +119,8 @@ export function ChatInterface() {
 
   const handleSend = async (content: string = input) => {
     if (!content.trim()) return;
+    if (!hasStartedChat) setHasStartedChat(true);
+    // Don't hide suggestions immediately - let them stay visible
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -156,24 +166,35 @@ export function ChatInterface() {
 
   return (
     <motion.section
-      className="flex flex-col h-full px-4 sm:px-6 lg:px-8 pb-6 pt-4"
+      className={`flex flex-col h-full transition-all duration-500 ${
+        hasStartedChat ? "px-0" : "px-4 sm:px-6 lg:px-8"
+      }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
-      <div className="max-w-4xl mx-auto w-full flex flex-col h-full">
-        {/* Chat Interface */}
+      <div
+        className={`flex flex-col h-full ${
+          hasStartedChat ? "max-w-none" : "max-w-6xl mx-auto"
+        }`}
+      >
         <motion.div
           className="flex-1 flex flex-col min-h-0"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <Card className="backdrop-blur-md bg-white/30 dark:bg-black/30 border border-white/20 dark:border-gray-600 shadow-lg rounded-2xl flex-1 flex flex-col transition-colors duration-300">
+          <Card className="bg-transparent border-0 shadow-none rounded-2xl flex-1 flex flex-col transition-colors duration-300">
             <CardContent className="p-0 flex-1 flex flex-col min-h-0">
               {/* Messages */}
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-6">
+              <ScrollArea
+                className={`flex-1 ${hasStartedChat ? "p-4 sm:p-6" : "p-6"}`}
+              >
+                <div
+                  className={`space-y-6 ${
+                    hasStartedChat ? "max-w-6xl mx-auto" : ""
+                  }`}
+                >
                   <AnimatePresence mode="popLayout">
                     {messages.map((message) => (
                       <motion.div
@@ -294,106 +315,134 @@ export function ChatInterface() {
                   <div ref={scrollRef} />
                 </div>
               </ScrollArea>
-
-              {/* Input */}
-              <motion.div
-                className="border-t border-slate-100 dark:border-slate-700 p-4 sm:p-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <div className="flex gap-3">
-                  <motion.div
-                    className="flex-1"
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <Input
-                      ref={inputRef}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Type your message..."
-                      className="flex-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-slate-400 dark:focus:border-slate-500 focus:ring-slate-400 dark:focus:ring-slate-500 rounded-xl transition-colors"
-                      disabled={isTyping}
-                    />
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  >
-                    <Button
-                      onClick={() => handleSend()}
-                      disabled={!input.trim() || isTyping}
-                      className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-4 rounded-xl transition-colors disabled:opacity-50"
-                    >
-                      <motion.div
-                        animate={isTyping ? { rotate: 360 } : { rotate: 0 }}
-                        transition={{
-                          duration: 1,
-                          repeat: isTyping ? Infinity : 0,
-                          ease: "linear",
-                        }}
-                      >
-                        <Send className="w-4 h-4" />
-                      </motion.div>
-                    </Button>
-                  </motion.div>
-                </div>
-              </motion.div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Suggestions - Only show initially */}
-        <AnimatePresence>
-          {showSuggestions && (
-            <motion.div
-              className="mt-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              <motion.p
-                className="text-sm text-slate-500 dark:text-slate-400 mb-3 text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                Try asking:
-              </motion.p>
+        {/* Input and Suggestions Container - Sticky when chat started */}
+        <motion.div
+          className={`${
+            hasStartedChat
+              ? "fixed bottom-0 left-0 right-0  backdrop-blur-lg border-t border-slate-100 dark:border-slate-700"
+              : ""
+          }`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {/* Input */}
+          <div
+            className={`${
+              hasStartedChat
+                ? "px-4 sm:px-6 py-4"
+                : "border-t border-slate-100 dark:border-slate-700 p-4 sm:p-6"
+            }`}
+          >
+            <div className={`max-w-xl mx-auto w-full`}>
               <div className="flex gap-3 justify-center">
-                {suggestions.map((suggestion, index) => (
-                  <motion.div
-                    key={index}
-                    custom={index}
-                    variants={suggestionVariants}
-                    initial="hidden"
-                    animate="visible"
+                <motion.div
+                  className="flex-1"
+                  whileFocus={{ scale: 1.01 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 25,
+                  }}
+                >
+                  <Input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type your message..."
+                    className="w-full backdrop-blur-md bg-white/30 dark:bg-black/20 border border-white/20 dark:border-white/10 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none rounded-2xl transition-colors shadow-md"
+                    disabled={isTyping}
+                  />
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 20,
+                  }}
+                >
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-4 rounded-2xl transition-colors disabled:opacity-50"
                   >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSend(suggestion)}
-                      className="backdrop-blur-md bg-white/30 dark:bg-black/20 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors text-left justify-start h-auto py-3 px-4 text-sm font-normal rounded-xl shadow-md"
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                    <motion.div
+                      animate={isTyping ? { rotate: 360 } : { rotate: 0 }}
                       transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 20,
+                        duration: 1,
+                        repeat: isTyping ? Infinity : 0,
+                        ease: "linear",
                       }}
                     >
-                      {suggestion}
-                    </Button>
-                  </motion.div>
-                ))}
+                      <Send className="w-4 h-4" />
+                    </motion.div>
+                  </Button>
+                </motion.div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Suggestions - Only show initially */}
+          <AnimatePresence>
+            {showSuggestions && (
+              <motion.div
+                className={`${hasStartedChat ? "px-4 pb-4" : "mt-6"}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+              >
+                <motion.p
+                  className="text-sm text-slate-500 dark:text-slate-400 mb-3 text-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  Try asking:
+                </motion.p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  {suggestions.map((suggestion, index) => (
+                    <motion.div
+                      key={index}
+                      custom={index}
+                      variants={suggestionVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSend(suggestion)}
+                        className="backdrop-blur-md bg-white/30 dark:bg-black/20 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors text-left justify-start h-auto py-3 px-4 text-sm font-normal rounded-xl shadow-md"
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 20,
+                        }}
+                      >
+                        {suggestion}
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Spacer for fixed input when chat has started */}
+        {hasStartedChat && (
+          <div style={{ height: showSuggestions ? "180px" : "88px" }} />
+        )}
       </div>
     </motion.section>
   );

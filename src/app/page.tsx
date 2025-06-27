@@ -1,9 +1,12 @@
 // app/page.tsx
+"use client";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MinimalHero } from "@/components/sections/Hero";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { useState } from "react";
 
 export default function HomePage() {
+  const [hasStartedChat, setHasStartedChat] = useState(false);
   return (
     <ThemeProvider attribute="class" defaultTheme="system">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-black dark:to-neutral-900 transition-colors duration-300 relative overflow-hidden">
@@ -21,8 +24,13 @@ export default function HomePage() {
 
         {/* Main content */}
         <main className="relative z-10 min-h-screen flex flex-col">
-          <MinimalHero />
-          <ChatInterface />
+          <div className="relative min-h-screen">
+            {!hasStartedChat && <MinimalHero />}
+            <ChatInterface
+              hasStartedChat={hasStartedChat}
+              setHasStartedChat={setHasStartedChat}
+            />
+          </div>
         </main>
       </div>
     </ThemeProvider>
