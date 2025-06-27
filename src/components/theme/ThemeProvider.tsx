@@ -1,3 +1,4 @@
+// components/theme/ThemeProvider.tsx
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -8,6 +9,7 @@ type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
+  attribute?: string;
 };
 
 type ThemeProviderState = {
@@ -26,6 +28,7 @@ export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "ui-theme",
+  attribute = "class",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
