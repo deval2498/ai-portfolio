@@ -3,7 +3,7 @@ export const messageVariants = {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { type: "spring", stiffness: 420, damping: 32 },
+      transition: { type: "spring", stiffness: 300, damping: 32 },
     },
     exit:    { opacity: 0, y: 10, transition: { duration: 0.15 } },
   };

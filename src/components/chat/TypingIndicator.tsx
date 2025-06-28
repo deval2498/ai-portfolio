@@ -9,7 +9,6 @@ export function TypingIndicator() {
       variants={typingVariants}
       initial="hidden"
       animate="visible"
-      exit="exit"
     >
       <ChatAvatar sender="ai" />
       <motion.div
